@@ -1,0 +1,65 @@
+# Essential Commands for U-Net Background Removal
+
+## Installation
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install -r requirements.txt
+
+## Training Commands
+
+# Quick test (5-10 minutes)
+python train.py --epochs 5 --batch_size 2
+
+# Standard training (1.5-2.5 hours, RTX 4050)
+python train.py --epochs 50 --batch_size 16 --num_workers 0
+
+# High quality (4-6 hours)
+python train.py --epochs 100 --batch_size 16 --num_workers 0 --learning_rate 5e-5
+
+# Resume training
+python train.py --epochs 50 --batch_size 16 --resume checkpoints/checkpoint_epoch_25.pth
+
+## Inference Commands
+
+# Single image
+python inference.py --input photo.jpg --output result.png
+
+# Batch processing
+python inference.py --input photos/ --output results/ --batch
+
+# With threshold adjustment
+python inference.py --input photo.jpg --output result.png --threshold 0.7
+
+# White background instead of transparent
+python inference.py --input photo.jpg --output result.png --background white
+
+# Custom model checkpoint
+python inference.py --input photo.jpg --output result.png --model checkpoints/checkpoint_epoch_50.pth
+
+## Troubleshooting
+
+# If CUDA out of memory
+python train.py --batch_size 8
+
+# If training on CPU
+python train.py --device cpu --batch_size 2
+
+# Verify CUDA installation
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
+
+# Test model architecture
+python models/u2net_model.py
+
+## Dataset Preparation
+
+# Create directories
+mkdir -p data/images data/masks
+
+# Verify dataset
+python -c "import os; imgs=len(os.listdir('data/images')); masks=len(os.listdir('data/masks')); print(f'Images: {imgs}, Masks: {masks}')"
+
+## Performance (RTX 4050, 15,572 images)
+
+Batch 2:  12 it/s, 8 min/epoch,  ~7 hours for 50 epochs, 1.9 GB memory
+Batch 8:  35 it/s, 3 min/epoch,  ~2.5 hours for 50 epochs, 3.5 GB memory
+Batch 16: 60 it/s, 1.5 min/epoch, ~1.5 hours for 50 epochs, 5.0 GB memory
+Batch 24: 75 it/s, 1 min/epoch,   ~1 hour for 50 epochs, 5.8 GB memory

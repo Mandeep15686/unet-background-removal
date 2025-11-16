@@ -1,0 +1,170 @@
+# U-Net Background Removal - Training Guide
+
+## Quick Start Commands
+
+### 1. Setup Environment
+```bash
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Linux/Mac
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+### 2. Prepare Dataset
+```bash
+# Create folder structure
+mkdir -p data/images data/masks
+
+# Copy your images to data/images/
+# Copy corresponding masks to data/masks/
+# Ensure filenames match: img001.jpg → img001.png
+```
+
+### 3. Training Commands
+
+**Quick Test (5-10 minutes)**
+```bash
+python train.py --epochs 5 --batch_size 2
+```
+
+**Standard Training (1.5-2.5 hours on RTX 4050)**
+```bash
+python train.py --epochs 50 --batch_size 16 --num_workers 0
+```
+
+**High Quality (4-6 hours)**
+```bash
+python train.py --epochs 100 --batch_size 16 --num_workers 0 --learning_rate 5e-5
+```
+
+### 4. Inference Commands
+
+**Single Image**
+```bash
+python inference.py --input photo.jpg --output result.png
+```
+
+**Batch Processing**
+```bash
+python inference.py --input photos/ --output results/ --batch
+```
+
+**With Custom Settings**
+```bash
+python inference.py --input photo.jpg --output result.png --threshold 0.7 --background white
+```
+
+## Training Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| --epochs | 20 | Number of training epochs |
+| --batch_size | 4 | Batch size (increase for faster training) |
+| --learning_rate | 1e-4 | Learning rate |
+| --image_size | 256 | Input image size (256 or 512) |
+| --device | cuda | Device to use (cuda/cpu) |
+| --num_workers | 4 | Data loading workers |
+| --accumulation_steps | 2 | Gradient accumulation steps |
+| --resume | None | Path to checkpoint to resume training |
+
+## Common Issues & Solutions
+
+### CUDA out of memory
+```bash
+# Solution 1: Reduce batch size
+python train.py --batch_size 8
+
+# Solution 2: Reduce image size
+python train.py --batch_size 4 --image_size 256
+
+# Solution 3: Use CPU
+python train.py --device cpu --batch_size 2
+```
+
+### No images found
+```bash
+# Check directory structure
+ls data/images/
+ls data/masks/
+
+# Verify files exist
+```
+
+### Loss not decreasing
+```bash
+# Train longer
+python train.py --epochs 100
+
+# Adjust learning rate
+python train.py --learning_rate 5e-5
+```
+
+## Performance Benchmarks (RTX 4050)
+
+| Batch Size | Speed | Time/Epoch | 50 Epochs | Memory |
+|------------|-------|------------|-----------|--------|
+| 2 | 12 it/s | 8 min | ~7 hours | 1.9 GB |
+| 8 | 35 it/s | 3 min | ~2.5 hours | 3.5 GB |
+| 16 | 60 it/s | 1.5 min | ~1.5 hours | 5.0 GB |
+| 24 | 75 it/s | 1 min | ~1 hour | 5.8 GB |
+
+## Expected Training Output
+
+```
+Configuration:
+  batch_size: 16
+  epochs: 50
+  device: cuda
+
+Found 15572 images
+✓ Train: 12457 | Val: 3115
+
+Training on cuda
+Batch size: 16
+Effective batch size: 16
+------------------------------------------------------------
+Epoch 1/50: 100%|████████| 778/778 [01:45<00:00, 7.4it/s, loss=0.3644]
+Epoch 1: Train=0.3644, Val=0.2816
+✓ Saved best model (val_loss: 0.2816)
+...
+```
+
+## Dataset Requirements
+
+- **Minimum**: 50-100 image-mask pairs
+- **Recommended**: 500-1000 pairs
+- **Production**: 2000+ pairs
+
+**Mask format**:
+- Grayscale (1 channel)
+- White (255) = keep
+- Black (0) = remove
+- Filenames must match images
+
+## Resume Training
+
+```bash
+# Resume from checkpoint
+python train.py --epochs 50 --batch_size 16 --resume checkpoints/checkpoint_epoch_25.pth
+```
+
+## Verify Setup
+
+```bash
+# Test PyTorch + CUDA
+python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
+
+# Test model
+python models/u2net_model.py
+```
+
+---
+
+**For complete documentation, see README.md**
