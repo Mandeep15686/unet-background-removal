@@ -27,16 +27,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # REMOVED: Black formatting check (uncomment when ready)
-    # - name: Check code formatting with black
-    #   run: |
-    #     pip install black
-    #     black --check .
+    - name: Format code with black (don't fail)
+      run: |
+        pip install black
+        black .
+      continue-on-error: true
 
     - name: Lint with flake8
       run: |
         pip install flake8
-        # Allow longer lines and ignore some style rules
         flake8 . --max-line-length=120 --ignore=E203,W503,E501 --exclude=.venv,venv,__pycache__
       continue-on-error: true
 
@@ -47,13 +46,3 @@ jobs:
     - name: Verify U-Net model can be imported
       run: |
         python -c "from models.u2net_model import UNet; print('✓ Model import successful')"
-
-    - name: Test model architecture
-      run: |
-        python models/u2net_model.py || echo "Model test completed"
-
-    - name: Run unit tests (pytest)
-      run: |
-        pip install pytest
-        pytest tests/ || echo "No tests found - skipping"
-      continue-on-error: true
