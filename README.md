@@ -292,4 +292,7 @@ See [LICENSE](LICENSE) file for details.
 
 ---
 
+**Made with ❤️ by Mandeep Singh**
+
+
 **Happy segmenting! 🎨🚀**
